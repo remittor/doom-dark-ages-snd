@@ -120,10 +120,9 @@ class SoundMetadata:
             snd_name = self.read_name()
             num1 = int.from_bytes(self.fd.read(4), 'little')
             num2 = int.from_bytes(self.fd.read(4), 'little')
-            size = int.from_bytes(self.fd.read(4), 'little')
-            size = size * 4
-            print(f'0x{num1:02X} 0x{num2:02X} [size = {size:04}] : {snd_name}')
-            data = self.fd.read(size)
+            inum = int.from_bytes(self.fd.read(4), 'little')
+            print(f'0x{num1:02X} 0x{num2:02X} [items = {inum:04}] : {snd_name}')
+            data = self.fd.read(inum * 4)
 
 if __name__ == '__main__':
     smd = SoundMetadata()
