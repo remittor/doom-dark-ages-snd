@@ -49,42 +49,47 @@ class SoundMetadata:
         print(f'{fcnt=}')
         for num in range(0, fcnt):
             self.pos = self.fd.tell()
-            fname, crc = self.read_name(2)
+            fname = self.read_name()
+            val = self.read_int()
             vt = self.read_int(1)
             dir_name = self.read_name()
-            print(f'{crc:08X} [{vt}] {dir_name}/{fname}')
+            print(f'{val:08X} [{vt}] {dir_name}/{fname}')
             if vt != 0 and vt != 1:
                 pos = self.fd.tell()
                 raise RuntimeError(f'Incorrect vt = {vt}  pos = 0x{pos:X}')
 
         pos = self.fd.tell()
-        print(f'========= {pos:08} =================================================')
+        #print(f'========= {pos:08X} =================================================')
         
         fcnt = self.read_int()
         print(f'====== {fcnt=}  =============')
         for num in range(0, fcnt):
-            fname, crc = self.read_name(1)
-            print(f'{crc:08X}: {fname}')
+            val = self.read_int()
+            fname = self.read_name()
+            print(f'{val:08X}: {fname}')
         
         fcnt = self.read_int()
         print(f'====== {fcnt=}  ====================')
         for num in range(0, fcnt):
-            fname, crc = self.read_name(2)
-            print(f'{crc:08X}: {fname}')
+            fname = self.read_name()
+            val = self.read_int()
+            print(f'{val:08X}: {fname}')
 
         pos = self.fd.tell()
-        print(f'========= {pos:08X} =================================================')
+        #print(f'========= {pos:08X} =================================================')
 
         for i in range(0, 2):
             bcnt = self.read_int()
             print(f'======== {bcnt=} ============================================')
             for bn in range(0, bcnt):
-                dirname, crc = self.read_name(1)
+                val = self.read_int()
+                dirname = self.read_name()
                 fcnt = self.read_int()
-                print(f'====== {dirname=} {fcnt=} ====================')
+                print(f'====== {val:08X}: "{dirname}" ({fcnt=}) ====================')
                 for num in range(0, fcnt):
-                    fname, crc = self.read_name(1)
-                    print(f'{crc:08X}:  {fname}')
+                    val = self.read_int()
+                    fname = self.read_name()
+                    print(f'{val:08X}:  {fname}')
          
 
         fcnt = self.read_int()
@@ -92,31 +97,35 @@ class SoundMetadata:
         kk = 0
         for num in range(0, fcnt):
             self.pos = self.fd.tell()
-            fname, crc = self.read_name(2)
+            fname = self.read_name()
+            val = self.read_int()
             unk1 = self.read_int()
             f0 = self.read_int(1)
             f1 = self.read_int(1)
             f2 = self.read_int(1)
             unk2 = self.read_int()
-            print(f'{crc:08X}: {unk1:08X} {f0}-{f1}-{f2} {unk2:08X} "{fname}"')
+            print(f'{val:08X}: {unk1:08X} {f0}-{f1}-{f2} {unk2:08X} "{fname}"')
             if f1 == 0:
                 lang_cnt = self.read_int()
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
-                    lang_name, crc = self.read_name(2)
+                    lang_name = self.read_name()
+                    val = self.read_int()
                     lang_list.append(lang_map[lang_name]) 
                 print(f'  {"".join(lang_list)}')
                 lang_cnt = self.read_int()
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
-                    lang_name, crc = self.read_name(1)
+                    val = self.read_int()
+                    lang_name = self.read_name()
                     lang_list.append(lang_map[lang_name]) 
                 print(f'  {"".join(lang_list)}')
             else:
                 xcnt = self.read_int()
                 for i in range(0, xcnt):
-                    dir_name, crc = self.read_name(1)
-                    print(f'  {crc:08X}: {dir_name}')
+                    val = self.read_int()
+                    dir_name = self.read_name()
+                    print(f'  {val:08X}: {dir_name}')
 
         fcnt = int.from_bytes(self.fd.read(4), 'little')
         print(f'======== {fcnt=} ============================================')
