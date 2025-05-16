@@ -90,12 +90,13 @@ class SoundMetadata:
         for num in range(0, fcnt):
             self.pos = self.fd.tell()
             fname, crc = self.read_name(2)
-            unk1 = self.fd.read(4)
-            flags = self.fd.read(3)
-            unk2 = self.fd.read(4)
-            print(f'{crc:08X}: {unk1.hex()} {flags.hex()} {unk2.hex()} "{fname}"')
-            flags = int.from_bytes(flags, 'little')
-            if flags == 0:
+            unk1 = int.from_bytes(self.fd.read(4), 'little')
+            f0 = int.from_bytes(self.fd.read(1), 'little')
+            f1 = int.from_bytes(self.fd.read(1), 'little')
+            f2 = int.from_bytes(self.fd.read(1), 'little')
+            unk2 = int.from_bytes(self.fd.read(4), 'little')
+            print(f'{crc:08X}: {unk1:08X} {f0}-{f1}-{f2} {unk2:08X} "{fname}"')
+            if f1 == 0:
                 lang_cnt = int.from_bytes(self.fd.read(4), 'little')
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
