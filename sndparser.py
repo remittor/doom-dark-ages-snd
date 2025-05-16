@@ -19,11 +19,14 @@ class SoundMetadata:
         self.smdfn = 'soundmetadata.bin'
         self.fd = None
 
+    def read_int(self, size = 4):
+        return int.from_bytes(self.fd.read(size), 'little')
+
     def read_name(self, read_hash = 0):        
         name_hash = None
         if read_hash == 1:
-            name_hash = int.from_bytes(self.fd.read(4), 'little')
-        name_size = int.from_bytes(self.fd.read(4), 'little')
+            name_hash = self.read_int()
+        name_size = self.read_int()
         if name_size == 0 or name_size > 100:
             pos = self.fd.tell()
             raise RuntimeError(f'Incorrect name_size = 0x{name_size:X} into 0x{pos:X}')
@@ -34,7 +37,7 @@ class SoundMetadata:
             pos = self.fd.tell() - name_size
             raise RuntimeError(f'Incorrect name {name} into 0x{pos:X}  k = {self.k}')
         if read_hash == 2:
-            name_hash = int.from_bytes(self.fd.read(4), 'little')
+            name_hash = self.read_int()
         if name_hash is None:
             return name
         else:
@@ -42,12 +45,12 @@ class SoundMetadata:
 
     def decode(self):
         self.fd = open(self.smdfn, 'rb')
-        fcnt = int.from_bytes(self.fd.read(4), 'little')
+        fcnt = self.read_int()
         print(f'{fcnt=}')
         for num in range(0, fcnt):
             self.pos = self.fd.tell()
             fname, crc = self.read_name(2)
-            vt = int.from_bytes(self.fd.read(1), 'little')
+            vt = self.read_int(1)
             dir_name = self.read_name()
             print(f'{crc:08X} [{vt}] {dir_name}/{fname}')
             if vt != 0 and vt != 1:
@@ -57,13 +60,13 @@ class SoundMetadata:
         pos = self.fd.tell()
         print(f'========= {pos:08} =================================================')
         
-        fcnt = int.from_bytes(self.fd.read(4), 'little')
+        fcnt = self.read_int()
         print(f'====== {fcnt=}  =============')
         for num in range(0, fcnt):
             fname, crc = self.read_name(1)
             print(f'{crc:08X}: {fname}')
         
-        fcnt = int.from_bytes(self.fd.read(4), 'little')
+        fcnt = self.read_int()
         print(f'====== {fcnt=}  ====================')
         for num in range(0, fcnt):
             fname, crc = self.read_name(2)
@@ -73,44 +76,44 @@ class SoundMetadata:
         print(f'========= {pos:08X} =================================================')
 
         for i in range(0, 2):
-            bcnt = int.from_bytes(self.fd.read(4), 'little')
+            bcnt = self.read_int()
             print(f'======== {bcnt=} ============================================')
             for bn in range(0, bcnt):
                 dirname, crc = self.read_name(1)
-                fcnt = int.from_bytes(self.fd.read(4), 'little')
+                fcnt = self.read_int()
                 print(f'====== {dirname=} {fcnt=} ====================')
                 for num in range(0, fcnt):
                     fname, crc = self.read_name(1)
                     print(f'{crc:08X}:  {fname}')
          
 
-        fcnt = int.from_bytes(self.fd.read(4), 'little')
+        fcnt = self.read_int()
         print(f'======== {fcnt=} ============================================')
         kk = 0
         for num in range(0, fcnt):
             self.pos = self.fd.tell()
             fname, crc = self.read_name(2)
-            unk1 = int.from_bytes(self.fd.read(4), 'little')
-            f0 = int.from_bytes(self.fd.read(1), 'little')
-            f1 = int.from_bytes(self.fd.read(1), 'little')
-            f2 = int.from_bytes(self.fd.read(1), 'little')
-            unk2 = int.from_bytes(self.fd.read(4), 'little')
+            unk1 = self.read_int()
+            f0 = self.read_int(1)
+            f1 = self.read_int(1)
+            f2 = self.read_int(1)
+            unk2 = self.read_int()
             print(f'{crc:08X}: {unk1:08X} {f0}-{f1}-{f2} {unk2:08X} "{fname}"')
             if f1 == 0:
-                lang_cnt = int.from_bytes(self.fd.read(4), 'little')
+                lang_cnt = self.read_int()
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
                     lang_name, crc = self.read_name(2)
                     lang_list.append(lang_map[lang_name]) 
                 print(f'  {"".join(lang_list)}')
-                lang_cnt = int.from_bytes(self.fd.read(4), 'little')
+                lang_cnt = self.read_int()
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
                     lang_name, crc = self.read_name(1)
                     lang_list.append(lang_map[lang_name]) 
                 print(f'  {"".join(lang_list)}')
             else:
-                xcnt = int.from_bytes(self.fd.read(4), 'little')
+                xcnt = self.read_int()
                 for i in range(0, xcnt):
                     dir_name, crc = self.read_name(1)
                     print(f'  {crc:08X}: {dir_name}')
@@ -119,9 +122,9 @@ class SoundMetadata:
         print(f'======== {fcnt=} ============================================')
         for num in range(0, fcnt):
             snd_name = self.read_name()
-            num1 = int.from_bytes(self.fd.read(4), 'little')
-            num2 = int.from_bytes(self.fd.read(4), 'little')
-            inum = int.from_bytes(self.fd.read(4), 'little')
+            num1 = self.read_int()
+            num2 = self.read_int()
+            inum = self.read_int()
             print(f'0x{num1:02X} 0x{num2:02X} [items = {inum:04}] : {snd_name}')
             data = self.fd.read(inum * 4)
 
