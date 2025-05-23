@@ -2,6 +2,21 @@
 import os
 import sys
 import io
+import optparse
+
+parser = optparse.OptionParser("usage: %prog [options]")
+parser.add_option("-f", "--file", dest="file", default = None)
+parser.add_option("-c", "--conf", dest="confgen", action="store_true", default = False)
+parser.add_option("-q", "--qrcode", dest="qrcode", action="store_true", default = False)
+parser.add_option("-a", "--add", dest="addcl", default = "")
+parser.add_option("-u", "--update", dest="update", default = "")
+parser.add_option("-d", "--delete", dest="delete", default = "")
+parser.add_option("-i", "--ipaddr", dest="ipaddr", default = "")
+parser.add_option("-p", "--port", dest="port", default = None, type = 'int')
+parser.add_option("", "--make", dest="makecfg", default = "")
+parser.add_option("", "--tun", dest="tun", default = "")
+parser.add_option("", "--create", dest="create", action="store_true", default = False)
+(opt, args) = parser.parse_args()
 
 lang_map = {
    'English(US)': 'E',
@@ -185,20 +200,22 @@ class SoundMetadata:
             f1 = stream.read_uint(1)
             f2 = stream.read_uint(1)
             unk2 = stream.read_uint()
-            print(f'{val:08X}: {unk1:08X} {f0}-{f1}-{f2} {unk2:08X} "{fname}"')
+            print(f'{val:08X}: {unk1:08X} {f0}-{f1}-{f2} {unk2:08X} "{fname}"  [{num}/{fcnt}]')
             if f1 == 0:
                 lang_cnt = stream.read_uint()
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
                     lang_name = stream.read_name()
                     val = stream.read_uint()
-                    lang_list.append(lang_map[lang_name]) 
+                    print(f'  {val:08X}: {lang_name}')
+                    lang_list.append(lang_map[lang_name])
                 print(f'  {"".join(lang_list)}')
                 lang_cnt = stream.read_uint()
                 lang_list = [ ]
                 for lang_num in range(0, lang_cnt):
                     val = stream.read_uint()
                     lang_name = stream.read_name()
+                    print(f'  {val:08X}: {lang_name}')
                     lang_list.append(lang_map[lang_name]) 
                 print(f'  {"".join(lang_list)}')
             else:
@@ -219,10 +236,9 @@ class SoundMetadata:
             data = stream.read(inum * 4)
 
 class WaveSound:
-    def __init__(self):
-        self.sndfn = 'English(US).snd'
-        #self.sndfn = 'SFX.snd'
-        self.stream = DataReader(self.sndfn)
+    def __init__(self, filename):
+        self.filename = filename
+        self.stream = DataReader(self.filename)
 
     @property
     def cur_pos(self):
@@ -231,7 +247,7 @@ class WaveSound:
     def decode(self):
         stream = self.stream
         ver = stream.read_uint()
-        print(f'File "{self.sndfn}"  {ver=}')
+        print(f'File "{self.filename}"  {ver=}')
         xsize = stream.read_uint()
         print(f'{xsize=:08X}')
         blk_end = stream.cur_pos - 4 + xsize
@@ -251,7 +267,7 @@ class WaveSound:
                 if not withdata and pos >= hdr_end:
                     break                    
                 if stream.eof:
-                    print(f'END of File "{self.sndfn}" (pos = 0x{pos:08X}) {withdata=}')
+                    print(f'END of File "{self.filename}" (pos = 0x{pos:08X}) {withdata=}')
                     return
                 magic = stream.read(4)
                 if magic != b'RIFF':
@@ -263,7 +279,7 @@ class WaveSound:
                 riff = stream.read(8 + rsize, check = True if withdata else False)
                 riff = DataReader(riff, pos)
                 if withdata and rk < 8:
-                    fn = os.path.basename(self.sndfn) + f'__{rk}.wav'
+                    fn = os.path.basename(self.filename) + f'__{rk}.wav'
                     with open(fn, 'wb') as file:
                         file.write(riff.getbuffer())
                 magic = riff.read(4)
@@ -296,7 +312,7 @@ class WaveSound:
             #data_size = blk_end - self.cur_pos
             aux_size = xsize - hdr_size
             aux = stream.read(aux_size)
-            #fn = os.path.basename(self.sndfn) + '__aux.dat'
+            #fn = os.path.basename(self.filename) + '__aux.dat'
             #with open(fn, 'wb') as file:
             #    file.write(aux)
             aux = DataReader(aux)
@@ -324,7 +340,9 @@ class WaveSound:
             print(f'    RAWDATA: {data}')
 
 if __name__ == '__main__':
-    #smd = SoundMetadata()
-    #smd.decode()
-    snd = WaveSound()
-    snd.decode()
+    if opt.file:
+        snd = WaveSound(opt.file)
+        snd.decode()
+    else:
+        smd = SoundMetadata()
+        smd.decode()
